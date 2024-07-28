@@ -1,3 +1,9 @@
+/**
+ * 2024 IoTone Japan
+ * Credits: ro2828
+ * Important details about cleverly handling serial mode configurations
+ * using some #ifdefs : (in Japanese) https://lang-ship.com/blog/work/m5stack-atoms3-2/
+ **/
 /*
 *******************************************************************************
 * Copyright (c) 2022 by M5Stack
@@ -24,14 +30,24 @@ uint8_t led_ih             = 0;
 uint8_t led_status         = 0;
 String led_status_string[] = {"Rainbow", "Red", "Green", "Blue"};
 
+#if ARDUINO_USB_CDC_ON_BOOT
+  #define S3USBSerial Serial
+#else
+  #if ARDUINO_USB_MODE
+    #define S3USBSerial USBSerial
+  #else
+    #error "Please, board settings -> USB CDC On Boot=Enabled"
+  #endif
+#endif
+
 /* After StampS3 is started or reset
    the program in the setUp () function will be run, and this part will only be
    run once.
    在StampS3启动或者复位后，即会开始执行setup()函数中的程序，该部分只会执行一次。
 */
 void setup() {
-    USBSerial.begin(115200);
-    USBSerial.println("StampS3 demo!");
+    S3USBSerial.begin(115200);
+    S3USBSerial.println("StampS3 demo!");
 
     pinMode(PIN_BUTTON, INPUT);
 
@@ -71,8 +87,8 @@ void loop() {
             if (led_status > 3) led_status = 0;
             while (!digitalRead(PIN_BUTTON))
                 ;
-            USBSerial.print("LED status updated: ");
-            USBSerial.println(led_status_string[led_status]);
+            S3USBSerial.print("LED status updated: ");
+            S3USBSerial.println(led_status_string[led_status]);
         }
     }
 }
